@@ -1,0 +1,91 @@
+!pip install flask pyngrok --quiet
+from pyngrok import ngrok
+ngrok.set_auth_token("34veCWYE5NsZJ5RuQw4vcOl6Qjv_3CXuFT6FZNVWqBGC7bxrb")
+
+!pip install flask pyngrok --quiet
+from flask import Flask, request, render_template_string
+from pyngrok import ngrok
+
+app = Flask(__name__)
+
+# ---------- Static Fleet (Feature A) ----------
+FLEET = [
+    {"id": "EV-001", "model": "Nissan Leaf",        "battery": 82, "status": "Available"},
+    {"id": "EV-002", "model": "Tesla Model 3",      "battery": 45, "status": "Charging"},
+    {"id": "EV-003", "model": "Hyundai Kona EV",    "battery": 67, "status": "On Trip"},
+    {"id": "EV-004", "model": "Kia Niro EV",        "battery": 23, "status": "Charging"},
+    {"id": "EV-005", "model": "Chevy Bolt",         "battery": 96, "status": "Available"},
+]
+
+KW = 7.5
+PRICE_PER_KWH = 0.15
+
+PAGE = """
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Simple EV Dashboard</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 20px;}
+    table {border-collapse: collapse; width: 100%;}
+    th, td {padding: 8px; border: 1px solid #ccc;}
+    th {background: #f0f0f0;}
+    .badge {padding: 4px 8px; border-radius: 8px;}
+    .Available {background: #d2f5d2;}
+    .Charging {background: #ffe9b5;}
+    .On\\ Trip {background: #cde3ff;}
+  </style>
+</head>
+<body>
+  <h2>Feature A: Fleet Overview</h2>
+  <table>
+    <tr><th>Vehicle ID</th><th>Model</th><th>Battery %</th><th>Status</th></tr>
+    {% for v in fleet %}
+      <tr>
+        <td>{{v.id}}</td><td>{{v.model}}</td>
+        <td>{{v.battery}}%</td>
+        <td><span class="badge {{v.status}}">{{v.status}}</span></td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  <h2>Feature B: Charging Cost Calculator</h2>
+  <form method="post">
+    <label>Vehicle:</label>
+    <select name="vehicle_id">
+      {% for v in fleet %}
+        <option value="{{v.id}}" {% if selected_vehicle==v.id %}selected{% endif %}>
+          {{v.id}} - {{v.model}}
+        </option>
+      {% endfor %}
+    </select><br><br>
+    <label>Charging Duration (hours):</label>
+    <input type="number" step="0.1" name="duration" value="{{duration or ''}}" required><br><br>
+    <input type="submit" value="Calculate">
+  </form>
+
+  {% if cost is not none %}
+    <p><strong>Estimated Cost:</strong> ${{"%.2f"|format(cost)}}</p>
+  {% endif %}
+</body>
+</html>
+"""
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    selected_vehicle = None
+    duration = None
+    cost = None
+    if request.method == "POST":
+        selected_vehicle = request.form.get("vehicle_id")
+        duration = float(request.form.get("duration", 0))
+        cost = duration * KW * PRICE_PER_KWH
+    return render_template_string(PAGE, fleet=FLEET,
+                                  selected_vehicle=selected_vehicle,
+                                  duration=duration, cost=cost)
+
+# Launch Flask via ngrok tunnel
+public_url = ngrok.connect(5000)
+print("Public URL:", public_url)
+app.run(port=5000)
