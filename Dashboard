@@ -8,7 +8,7 @@ from pyngrok import ngrok
 
 app = Flask(__name__)
 
-# ---------- Static Fleet (Feature A) ----------
+# Fleet (Feature A)
 FLEET = [
     {"id": "EV-001", "model": "Nissan Leaf",        "battery": 82, "status": "Available"},
     {"id": "EV-002", "model": "Tesla Model 3",      "battery": 45, "status": "Charging"},
