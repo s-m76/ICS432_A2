@@ -1,7 +1,8 @@
-In the web app, the cost is computed as duration * 7.5 * 0.15.
-During testing we noticed that the route does not validate the input, so negative values produce negative costs and non-numeric values would crash the server (float("abc")).
-To address this, We wrote unit tests around a calculate_cost() function that uses the same formula but adds validation.
-The tests confirm that positive hours return the correct cost, and that negative or non-numeric inputs fail gracefully using exceptions.
+In the web app, the charging duration input uses <input type="number"> which prevents users from typing letters or symbols.
+However, it still allows negative numbers, producing negative costs (e.g., –2 hours → –$2.25).
+During testing, we verified that the calculation logic needs backend validation to handle this gracefully.
+The unit tests confirm that positive inputs calculate correctly and that negative or non-numeric inputs raise proper errors.
+This prevents future bugs if the application later accepts external data or different form types.
 
 %%writefile test_cost.py
 import unittest
