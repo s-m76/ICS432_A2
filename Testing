@@ -1,0 +1,47 @@
+In the web app, the cost is computed as duration * 7.5 * 0.15.
+During testing we noticed that the route does not validate the input, so negative values produce negative costs and non-numeric values would crash the server (float("abc")).
+To address this, We wrote unit tests around a calculate_cost() function that uses the same formula but adds validation.
+The tests confirm that positive hours return the correct cost, and that negative or non-numeric inputs fail gracefully using exceptions.
+
+%%writefile test_cost.py
+import unittest
+
+# Same constants as in the Flask app
+KW = 7.5
+PRICE_PER_KWH = 0.15
+
+def calculate_cost(duration_hours):
+    """
+    Cost calculation for charging.
+    Mirrors the logic in the Flask app: duration * 7.5 * 0.15,
+    but adds validation so it fails gracefully for bad input.
+    """
+    if not isinstance(duration_hours, (int, float)):
+        raise TypeError("Duration must be a number")
+    if duration_hours < 0:
+        raise ValueError("Duration cannot be negative")
+    return duration_hours * KW * PRICE_PER_KWH
+
+class TestCostFunction(unittest.TestCase):
+
+    def test_positive_hours(self):
+        # 2h → 2 * 7.5 * 0.15 = 2.25
+        expected = 2 * KW * PRICE_PER_KWH
+        self.assertAlmostEqual(calculate_cost(2), expected, places=2)
+
+    def test_negative_hours_fails_gracefully(self):
+        # Should not allow negative input
+        with self.assertRaises(ValueError):
+            calculate_cost(-3)
+
+    def test_non_numeric_input_fails_gracefully(self):
+        # Should fail (gracefully) for non-numeric input
+        with self.assertRaises(TypeError):
+            calculate_cost("abc")
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+
+!python3 -m unittest -v test_cost.py
