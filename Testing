@@ -15,7 +15,7 @@ def calculate_cost(duration_hours):
     """
     Cost calculation for charging.
     Mirrors the logic in the Flask app: duration * 7.5 * 0.15,
-    but adds validation so it fails gracefully for bad input.
+    but adds validation so it fails gracefully for bad input. (negative numbers)
     """
     if not isinstance(duration_hours, (int, float)):
         raise TypeError("Duration must be a number")
@@ -31,12 +31,12 @@ class TestCostFunction(unittest.TestCase):
         self.assertAlmostEqual(calculate_cost(2), expected, places=2)
 
     def test_negative_hours_fails_gracefully(self):
-        # Should not allow negative input
+        # Should not allow negative input, this is the main issue
         with self.assertRaises(ValueError):
             calculate_cost(-3)
 
     def test_non_numeric_input_fails_gracefully(self):
-        # Should fail (gracefully) for non-numeric input
+        # Should fail (gracefully) for non-numeric input, which already happens in the web application
         with self.assertRaises(TypeError):
             calculate_cost("abc")
 
